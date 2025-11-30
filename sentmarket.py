@@ -141,10 +141,10 @@ from langchain_core.documents import Document
 #from langchain_classic.chains import create_retrieval_chain
 #from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
-import streamlit as st
+#import streamlit as st
 
-github_token = st.secrets["GITHUB_TOKEN"]
-news_api = st.secrets["NEWS_API"]
+github_token = "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" # st.secrets["GITHUB_TOKEN"]
+news_api = "66d358d7fc7242d7a1b01c6a3a0e6d1e" #st.secrets["NEWS_API"]
 
 
 # URL base da NewsAPI
