@@ -149,7 +149,7 @@ import streamlit as st
 
 #news_api = os.getenv("news_api")
 github_token = st.secrets["GITHUB_TOKEN"]
-news_api = st.secrets["news_api"]
+news_api = st.secrets["NEWS_API"]
 
 
 # URL base da NewsAPI
@@ -247,7 +247,7 @@ import re
 
 # Modelo apontando para o endpoint do GitHub Models
 modelo = ChatOpenAI(
-    model="gpt-4o-mini",
+    model="openai/gpt-4o-mini",
     temperature=0.1,
     api_key= github_token,
     base_url="https://models.github.ai/inference"
@@ -551,9 +551,9 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-os.environ["GITHUB_TOKEN"] = "disabled"
-os.environ["LANGCHAIN HUB API KEY"] = "disabled"
-os.environ["LANGSMITH_API_KEY"] = ""
+# os.environ["GITHUB_TOKEN"] = "disabled"
+# os.environ["LANGCHAIN HUB API KEY"] = "disabled"
+# os.environ["LANGSMITH_API_KEY"] = ""
 
 
 def chatbot_news(pergunta):
