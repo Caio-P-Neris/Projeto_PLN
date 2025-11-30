@@ -247,7 +247,7 @@ import re
 
 # Modelo apontando para o endpoint do GitHub Models
 modelo = ChatOpenAI(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-4o",
     temperature=0.1,
     api_key= github_token,
     base_url="https://models.github.ai/inference"
