@@ -244,7 +244,8 @@ modelo = ChatOpenAI(
     model="openai/gpt-4o",
     temperature=0.1,
     api_key= github_token,
-    base_url="https://models.github.ai/inference"
+    base_url="https://models.github.ai/inference", 
+    streaming=False 
 )
 
 def analise_pais(pais, noticias: pd.DataFrame):
