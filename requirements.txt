@@ -5,4 +5,3 @@ langchain-openai==0.2.8
 requests
 pandas
 openai
-python-dotenv
