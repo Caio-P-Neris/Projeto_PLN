@@ -249,7 +249,7 @@ import re
 modelo = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.1,
-    api_key=os.getenv("GITHUB_TOKEN"),
+    api_key= github_token,
     base_url="https://models.github.ai/inference"
 )
 
