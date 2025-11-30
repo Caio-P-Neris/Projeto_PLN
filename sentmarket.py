@@ -149,7 +149,7 @@ import streamlit as st
 
 #news_api = os.getenv("news_api")
 github_token = st.secrets["GITHUB_TOKEN"]
-news_api = st.secrets["NEWS_API"]
+news_api = st.secrets["news_api"]
 
 
 # URL base da NewsAPI
