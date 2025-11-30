@@ -143,7 +143,7 @@ from langchain_core.documents import Document
 
 #import streamlit as st
 
-github_token = "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" # st.secrets["GITHUB_TOKEN"]
+github_token = "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" # st.secrets["GITHUB_TOKEN"]
 news_api = "66d358d7fc7242d7a1b01c6a3a0e6d1e" #st.secrets["NEWS_API"]
 
 
