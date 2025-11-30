@@ -141,12 +141,16 @@ from langchain_core.documents import Document
 #from langchain_classic.chains import create_retrieval_chain
 #from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import os
 
-load_dotenv()
+#load_dotenv()
+import streamlit as st
 
-news_api = os.getenv("news_api")
+#news_api = os.getenv("news_api")
+github_token = st.secrets["GITHUB_TOKEN"]
+news_api = st.secrets["NEWS_API"]
+
 
 # URL base da NewsAPI
 url = "https://newsapi.org/v2/everything"
@@ -237,7 +241,7 @@ from langchain_openai import ChatOpenAI
 import json
 import re
 
-github_token = os.getenv("GITHUB_TOKEN")
+#github_token = os.getenv("GITHUB_TOKEN")
 
 
 
