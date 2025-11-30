@@ -143,7 +143,7 @@ from langchain_core.documents import Document
 
 #import streamlit as st
 
-github_token = "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" # st.secrets["GITHUB_TOKEN"]
+github_token = "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" # st.secrets["GITHUB_TOKEN"]
 news_api = "66d358d7fc7242d7a1b01c6a3a0e6d1e" #st.secrets["NEWS_API"]
 
 
@@ -241,13 +241,11 @@ import re
 
 # Modelo apontando para o endpoint do GitHub Models
 modelo = ChatOpenAI(
-    model="azure/gpt-4o",
+    model="openai/gpt-4o",
     temperature=0.1,
     api_key= github_token,
-    base_url="https://models.github.ai/inference", 
-    streaming=False 
+    base_url="https://models.github.ai/inference"
 )
-
 def analise_pais(pais, noticias: pd.DataFrame):
     # Converte o DataFrame em string JSON (modelo entende melhor)
     noticias_json = noticias.to_json(orient="records", force_ascii=False)
