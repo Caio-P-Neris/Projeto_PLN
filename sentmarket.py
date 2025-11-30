@@ -143,7 +143,6 @@ from langchain_core.documents import Document
 
 import streamlit as st
 
-#news_api = os.getenv("news_api")
 github_token = st.secrets["GITHUB_TOKEN"]
 news_api = st.secrets["NEWS_API"]
 
@@ -237,7 +236,6 @@ from langchain_openai import ChatOpenAI
 import json
 import re
 
-#github_token = os.getenv("GITHUB_TOKEN")
 
 
 
@@ -546,10 +544,6 @@ prompt = ChatPromptTemplate.from_messages(
         ("human", "{input}"),
     ]
 )
-
-# os.environ["GITHUB_TOKEN"] = "disabled"
-# os.environ["LANGCHAIN HUB API KEY"] = "disabled"
-# os.environ["LANGSMITH_API_KEY"] = ""
 
 
 def chatbot_news(pergunta):
