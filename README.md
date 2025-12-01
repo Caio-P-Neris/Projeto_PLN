@@ -14,3 +14,5 @@ Neste trabalho, implementamos uma ferramenta de análisa do mercado financeiro p
   Sumarização do cenário econômico
 
   Sistema de perguntas e respostas sobre a economia
+  
+https://colab.research.google.com/drive/1blXhr1amFb9D0T52HdWVicnD2a9WzJkw#scrollTo=cYa_9YDh4CNg
