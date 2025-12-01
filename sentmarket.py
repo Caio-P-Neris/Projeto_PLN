@@ -143,7 +143,7 @@ from langchain_core.documents import Document
 
 #import streamlit as st
 
-github_token = "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" # st.secrets["GITHUB_TOKEN"]
+github_token = "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" # st.secrets["GITHUB_TOKEN"]
 news_api = "66d358d7fc7242d7a1b01c6a3a0e6d1e" #st.secrets["NEWS_API"]
 
 
@@ -426,7 +426,14 @@ acoes = ['VALE3', 'Petrobras', 'Banco Itaú SA', 'Apple'] #, 'BRFS3.SA', 'ABEV3.
 # for acao in acoes:
 #     analise_acao(acao, pesquisar_acoes(acao))
 
-def pesquisar_noticias(termos):
+import langchain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.documents import Document
+from langchain_core.runnables import RunnableLambda
+
+def pesquisar_noticias_por_termo(termos):
 
     query = " OR ".join([f'"{t}"' for t in termos])
 
@@ -470,131 +477,96 @@ def pesquisar_noticias(termos):
     print(f"Total de notícias encontradas: {len(articles)}")
     return articles
 
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
-
-from langchain_core.runnables import RunnableLambda
+#================================================================================================================================
 
 def df_to_documents(df):
     docs = []
     for _, row in df.iterrows():
+        # Adicionei tratamento para caso description seja None
+        desc = row.get('description', '')
+        if desc is None: desc = ""
+
         texto = (
             f"Título: {row['title']}\n"
-            f"Descrição: {row.get('description', '')}\n"
+            f"Descrição: {desc}\n"
             f"Fonte: {row['source']}\n"
-            f"URL: {row['url']}\n"
             f"Data: {row['publishedAt']}\n"
         )
         docs.append(Document(page_content=texto))
     return docs
 
+# --- PROMPT 1: APENAS PARA O ANALISTA (RAG) ---
+# Sem instruções de busca aqui, foco apenas na análise.
+prompt_analista_sistema = (
+    """Você é um analista econômico sênior.
+    Sua tarefa é responder à pergunta do usuário utilizando as notícias fornecidas como base principal (Contexto).
 
+    Diretrizes:
+    1. **Prioridade:** Use os fatos apresentados nas notícias (Contexto) para fundamentar sua resposta. Cite as fontes quando possível.
+    2. **Conhecimento Híbrido:** Se as notícias fornecidas forem insuficientes, vagas ou muito antigas, VOCÊ DEVE complementar a resposta com seu próprio conhecimento sobre economia e finanças.
+    3. **Transparência:** Se usar seu conhecimento próprio, deixe claro (ex: "Embora as notícias não mencionem, historicamente...").
+    4. **Formato:** Seja direto, profissional e estruturado.
 
-# class SimpleRetriever:
-#     def __init__(self, docs):
-#         self.docs = docs
-
-#     def get_relevant_documents(self, query):
-#         # devolve todas as notícias (sem filtro)
-#         return self.docs
-
-
-system_prompt = (
-    '''Você é um assistente especializado em economia, finanças e mercados, integrado a uma função externa de busca de notícias.
-
-Você agora recebeu o DataFrame com notícias relevantes, você deve analisá-lo à luz da pergunta original do usuário.
-
-Nunca repita a questão interna de busca: responda apenas à intenção explícita do usuário.
-
-Gerar a resposta final
-
-Use somente as notícias recebidas.
-
-Se o usuário pedir uma análise geral: produza um resumo claro.
-
-Se pedir tendências: destaque aspectos positivos, negativos ou neutros.
-
-Se pedir previsão, avaliação ou risco: faça inferências baseadas no conteúdo das notícias (sem inventar dados).
-
-Se o DataFrame vier vazio, diga isso de forma educada e ofereça alternativas.
-
-Restrições importantes
-
-Nunca invente notícias, números ou fatos.
-
-Não faça chamadas diretas à API, apenas determine o termo de busca que deve ser usado.
-
-Se houver ambiguidade no pedido do usuário, peça esclarecimentos antes de sugerir o termo de busca.
-
-Mantenha sempre um tom profissional, claro e voltado a economia/finanças.
-
-Objetivo final
-Transformar a pergunta do usuário em:
-
-🔍 Uma busca precisa na News API, e depois 📊 Uma análise econômica rigorosa das notícias encontradas.'''
+    Se as notícias forem totalmente irrelevantes para o tema, ignore-as e responda com seu conhecimento, avisando o usuário que as notícias recentes não ajudaram.
+    """
 )
 
-prompt = ChatPromptTemplate.from_messages(
+prompt_rag = ChatPromptTemplate.from_messages(
     [
-        ("system", system_prompt),
-        ("system", "Aqui estão as notícias relevantes para sua pergunta:\n\n{context}"),
+        ("system", prompt_analista_sistema),
+        ("system", "CONTEXTO (Notícias Recentes):\n\n{context}"),
         ("human", "{input}"),
     ]
 )
 
+#================================================================================================================================
 
 def chatbot_news(pergunta):
     #pergunta = input("Digite sua pergunta: ")
 
-    # 1️⃣ Primeira chamada do GPT — extrair o termo de busca
-    analise = modelo.invoke(f'''Você é um assistente especializado em economia, finanças e mercados, integrado a uma função externa de busca de notícias.
+    # Aqui usamos um prompt "inline" simples, pois é uma tarefa rápida
+    prompt_busca = f"""
+    Aja como um extrator de palavras-chave para uma API de notícias.
+    Analise a pergunta: "{pergunta}"
 
-Agora você deve apenas identifique claramente qual é o assunto econômico solicitado.
+    Retorne APENAS os termos principais para busca (ex: "Inflação Brasil", "Apple stock", "Taxa Selic").
+    Se for sobre um país, coloque o nome do país, mas sempre junto do tema. Cada termo deve ser um tópico completo (ex: "desemprego brasil"). Não retorne palavras isoladas como "Brasil", "economia", etc. Não use frases longas.
+    Saída SEMPRE no formato: termo1, termo2, termo3
 
-O assunto pode ser um país, um índice, um setor, uma ação específica, uma empresa ou evento macroeconômico.
+    Não use pontuação, não use aspas, apenas texto cru.
+    """
 
-Extraia apenas termos de busca para utilizar na News API.
+    termo_busca = modelo.invoke(prompt_busca).content.strip()
 
-Regras obrigatórias:
-- Responda SOMENTE com PEQUENOS termos.
-- Sem explicações.
-- Sem parágrafos.
-- Sem listas.
-- Sem markdown.
-- Sem aspas.
+    print(f"\n🔎 Termo interpretado: {termo_busca}")
+    print(f"📡 Buscando notícias...")
 
-Caso o usuário peça algo muito amplo (“como está a economia”), concentre a busca nos termos centrais relacionados ao tema. {pergunta}''').content
-    print("\n🔎 Termo interpretado como relevante:")
-    print(analise)
-
-    termo_busca = analise.strip()
-
-    print(f"\n📡 Buscando notícias sobre: {termo_busca} ...")
-
-    # 2️⃣ Buscar notícias
-    noticias_df = pesquisar_noticias(termo_busca)
-
-    if noticias_df.empty:
-        print("\n❌ Nenhuma notícia encontrada.")
+    #Buscar notícias
+    try:
+        noticias_df = pesquisar_noticias_por_termo(termo_busca)
+    except Exception as e:
+        print(f"Erro na busca: {e}")
         return
 
-    docs = df_to_documents(noticias_df)
+    # Se não achar notícias, o modelo ainda pode tentar responder
+    docs = []
+    if not noticias_df.empty:
+        docs = df_to_documents(noticias_df)
+        print(f"✅ {len(docs)} notícias encontradas e enviadas ao modelo.")
+    else:
+        print("⚠️ Nenhuma notícia encontrada. O modelo responderá apenas com conhecimento prévio.")
 
-    # 3️⃣ Criar o RAG
-    #retriever = SimpleRetriever(docs)
+    # O truque do RunnableLambda para injetar os docs que já temos
+    retriever = RunnableLambda(lambda x: docs)
 
-    retriever = RunnableLambda(lambda query: docs)
-
-    qa_chain = create_stuff_documents_chain(modelo, prompt)
+    qa_chain = create_stuff_documents_chain(modelo, prompt_rag)
     rag_chain = create_retrieval_chain(retriever, qa_chain)
 
-    # 4️⃣ Segunda chamada — agora sim, responder usando as notícias
-    resposta = rag_chain.invoke({"input": pergunta})
+    #Gerar Resposta Final
+    print("\n🧠 Gerando análise...")
+    resultado = rag_chain.invoke({"input": pergunta})
 
-    print("\n🧠 Resposta baseada nas notícias:")
-    print(resposta["answer"])
-    return resposta["answer"]
-    
-#chatbot_news()
+    print("\n" + "="*40)
+    print(resultado["answer"])
+    print("="*40 + "\n")
+    return resultado["answer"]
